@@ -67,7 +67,7 @@ const App = () => {
   const [log, setLog] = useState<Message[]>([]);
 
   const [portState, setPortState] = useState<PortState>("closed");
-
+  const [hasTriedAutoconnect, setHasTriedAutoconnect] = useState(false);
   const [hasManuallyDisconnected, setHasManuallyDisconnected] = useState(false);
 
   const portRef = useRef<SerialPort | null>(null);
@@ -140,24 +140,14 @@ const App = () => {
 
   const autoConnectToPort = async () => {
     setPortState("opening");
+    setHasTriedAutoconnect(true);
     const availablePorts = await navigator.serial.getPorts();
     if (availablePorts.length) {
       const port = availablePorts[0];
       await openPort(port);
+    } else {
+      setPortState("closed");
     }
-  };
-
-  /**
-   * Event handler for when the port is disconnected unexpectedly.
-   */
-  const onPortDisconnect = async () => {
-    // Wait for the reader to finish it's current loop
-    await readerClosedPromiseRef.current;
-    // Update state
-    readerRef.current = null;
-    readerClosedPromiseRef.current = Promise.resolve();
-    portRef.current = null;
-    setPortState("closed");
   };
 
   const manualDisconnectFromPort = async () => {
@@ -176,8 +166,23 @@ const App = () => {
 
       // Update port state
       setHasManuallyDisconnected(true);
+      setHasTriedAutoconnect(false);
       setPortState("closed");
     }
+  };
+
+  /**
+   * Event handler for when the port is disconnected unexpectedly.
+   */
+  const onPortDisconnect = async () => {
+    // Wait for the reader to finish it's current loop
+    await readerClosedPromiseRef.current;
+    // Update state
+    readerRef.current = null;
+    readerClosedPromiseRef.current = Promise.resolve();
+    portRef.current = null;
+    setHasTriedAutoconnect(false);
+    setPortState("closed");
   };
 
   // Handles attaching the reader and disconnect listener when the port is open
@@ -207,7 +212,12 @@ const App = () => {
 
   // Tries to auto-connect to a port, if possible
   useEffect(() => {
-    if (canUseSerial && !hasManuallyDisconnected && portState === "closed") {
+    if (
+      canUseSerial &&
+      !hasManuallyDisconnected &&
+      !hasTriedAutoconnect &&
+      portState === "closed"
+    ) {
       autoConnectToPort();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
