@@ -56,10 +56,10 @@ const App = () => {
 
   const [portState, setPortState] = useState<PortState>("closed");
   const portStateRef = useRef<PortState>("closed");
-  // const updatePortState = (nextState: PortState) => {
-  //   portStateRef.current = nextState;
-  //   setPortState(nextState);
-  // }
+  const updatePortState = (nextState: PortState) => {
+    portStateRef.current = nextState;
+    setPortState(nextState);
+  };
 
   const [hasTriedAutoconnect, setHasTriedAutoconnect] = useState(false);
 
@@ -103,8 +103,7 @@ const App = () => {
     try {
       await port.open({ baudRate: 9600 });
       portRef.current = port;
-      setPortState("open");
-      portStateRef.current = "open";
+      updatePortState("open");
     } catch (error) {
       console.error("Could not open port", error);
     }
@@ -139,16 +138,14 @@ const App = () => {
   const onPortDisconnect = async () => {
     readerClosedPromiseRef.current = Promise.resolve();
     portRef.current = null;
-    portStateRef.current = "closed";
-    setPortState(portStateRef.current);
+    updatePortState("closed");
   };
 
   // _DEV_: Closes any open ports on fast refresh
   useEffect(() => {
     return () => {
       if (portStateRef.current === "open") {
-        portStateRef.current = "closing";
-        setPortState(portStateRef.current);
+        updatePortState("closing");
       }
     };
   }, []);
@@ -162,8 +159,7 @@ const App = () => {
           readerClosedPromiseRef.current?.then(() => {
             port.close().then(() => {
               portRef.current = null;
-              setPortState("closed");
-              portStateRef.current = "closed";
+              updatePortState("closed");
             });
           });
           break;
@@ -181,6 +177,7 @@ const App = () => {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portState]);
 
   // Tries to autoconnect to a port if possible
