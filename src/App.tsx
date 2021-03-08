@@ -56,6 +56,11 @@ type Message = {
   timestamp: number;
 };
 
+// RESOURCES:
+// https://web.dev/serial/
+// https://reillyeon.github.io/serial/#onconnect-attribute-0
+// https://codelabs.developers.google.com/codelabs/web-serial
+
 const App = () => {
   const [canUseSerial] = useState(() => "serial" in navigator);
 
@@ -112,6 +117,7 @@ const App = () => {
       await port.open({ baudRate: 9600 });
       portRef.current = port;
       updatePortState("open");
+      setHasManuallyDisconnected(false);
     } catch (error) {
       console.error("Could not open port", error);
     }
@@ -142,13 +148,16 @@ const App = () => {
     }
   };
 
+  /**
+   * Event handler for when the port is disconnected unexpectedly.
+   */
   const onPortDisconnect = async () => {
+    // Wait for the reader to finish it's current loop
     await readerClosedPromiseRef.current;
-
+    // Update state
     readerRef.current = null;
     readerClosedPromiseRef.current = Promise.resolve();
     portRef.current = null;
-
     updatePortState("closed");
   };
 
@@ -157,33 +166,40 @@ const App = () => {
     if (port) {
       updatePortState("closing");
 
+      // Cancel any reading from port
       readerRef.current?.cancel();
       await readerClosedPromiseRef.current;
       readerRef.current = null;
 
+      // Close and nullify the port
       await port.close();
       portRef.current = null;
 
+      // Update port state
       setHasManuallyDisconnected(true);
       updatePortState("closed");
     }
   };
 
+  // Handles attaching the reader and disconnect listener when the port is open
   useEffect(() => {
-    if (
-      portState === "open" &&
-      portState === portStateRef.current &&
-      portRef.current
-    ) {
-      const port = portRef.current;
-      // When the port is open, read until closed and attach a `disconnect` listener
+    const port = portRef.current;
+    if (portState === "open" && portState === portStateRef.current && port) {
+      // When the port is open, read until closed
+      const aborted = { current: false };
       readerRef.current?.cancel();
       readerClosedPromiseRef.current.then(() => {
-        readerRef.current = null;
-        readerClosedPromiseRef.current = readUntilClosed(port);
+        if (!aborted.current) {
+          readerRef.current = null;
+          readerClosedPromiseRef.current = readUntilClosed(port);
+        }
       });
+
+      // Attach a listener for when the device is disconnected
       navigator.serial.addEventListener("disconnect", onPortDisconnect);
+
       return () => {
+        aborted.current = true;
         navigator.serial.removeEventListener("disconnect", onPortDisconnect);
       };
     }
