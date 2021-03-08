@@ -49,7 +49,7 @@ declare global {
   }
 }
 
-type PortState = "closed" | "closing" | "open";
+type PortState = "closed" | "closing" | "open" | "opening";
 
 type Message = {
   value: string;
@@ -67,11 +67,6 @@ const App = () => {
   const [log, setLog] = useState<Message[]>([]);
 
   const [portState, setPortState] = useState<PortState>("closed");
-  const portStateRef = useRef<PortState>("closed");
-  const updatePortState = (nextState: PortState) => {
-    portStateRef.current = nextState;
-    setPortState(nextState);
-  };
 
   const [hasManuallyDisconnected, setHasManuallyDisconnected] = useState(false);
 
@@ -97,7 +92,7 @@ const App = () => {
             break;
           }
           const timestamp = Date.now();
-          setLog((log) => [{ value: value + "/", timestamp }, ...log]);
+          setLog((log) => [{ value, timestamp }, ...log]);
         }
       } catch (error) {
         console.error(error);
@@ -116,14 +111,16 @@ const App = () => {
     try {
       await port.open({ baudRate: 9600 });
       portRef.current = port;
-      updatePortState("open");
+      setPortState("open");
       setHasManuallyDisconnected(false);
     } catch (error) {
+      setPortState("closed");
       console.error("Could not open port", error);
     }
   };
 
   const manualConnectToPort = async () => {
+    setPortState("opening");
     const filters = [
       // Can identify the vendor and product IDs by plugging in the device and visiting: chrome://device-log/
       // the IDs will be labeled `vid` and `pid`, respectively
@@ -136,11 +133,13 @@ const App = () => {
       const port = await navigator.serial.requestPort({ filters });
       await openPort(port);
     } catch (error) {
+      setPortState("closed");
       console.error("User did not select port", error);
     }
   };
 
-  const autoconnectToPort = async () => {
+  const autoConnectToPort = async () => {
+    setPortState("opening");
     const availablePorts = await navigator.serial.getPorts();
     if (availablePorts.length) {
       const port = availablePorts[0];
@@ -158,13 +157,13 @@ const App = () => {
     readerRef.current = null;
     readerClosedPromiseRef.current = Promise.resolve();
     portRef.current = null;
-    updatePortState("closed");
+    setPortState("closed");
   };
 
   const manualDisconnectFromPort = async () => {
     const port = portRef.current;
     if (port) {
-      updatePortState("closing");
+      setPortState("closing");
 
       // Cancel any reading from port
       readerRef.current?.cancel();
@@ -177,14 +176,14 @@ const App = () => {
 
       // Update port state
       setHasManuallyDisconnected(true);
-      updatePortState("closed");
+      setPortState("closed");
     }
   };
 
   // Handles attaching the reader and disconnect listener when the port is open
   useEffect(() => {
     const port = portRef.current;
-    if (portState === "open" && portState === portStateRef.current && port) {
+    if (portState === "open" && port) {
       // When the port is open, read until closed
       const aborted = { current: false };
       readerRef.current?.cancel();
@@ -206,10 +205,10 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portState]);
 
-  // Tries to autoconnect to a port if possible
+  // Tries to auto-connect to a port, if possible
   useEffect(() => {
-    if (!hasManuallyDisconnected && canUseSerial && portState === "closed") {
-      autoconnectToPort();
+    if (canUseSerial && !hasManuallyDisconnected && portState === "closed") {
+      autoConnectToPort();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canUseSerial, hasManuallyDisconnected, portState]);
@@ -218,21 +217,29 @@ const App = () => {
     return <p>Can't use serial in this browser</p>;
   }
 
+  let buttonText = "";
+  if (portState === "closed") {
+    buttonText = "Connect";
+  } else if (portState === "opening") {
+    buttonText = "Connecting";
+  } else if (portState === "open") {
+    buttonText = "Disconnect";
+  } else if (portState === "closing") {
+    buttonText = "Disconnecting";
+  }
+
+  let buttonAction = manualDisconnectFromPort;
+  if (portState === "closed") {
+    buttonAction = manualConnectToPort;
+  }
+
   return (
     <div>
       <button
-        disabled={portState === "closing"}
-        onClick={
-          portState === "closed"
-            ? manualConnectToPort
-            : manualDisconnectFromPort
-        }
+        disabled={portState === "opening" || portState === "closing"}
+        onClick={buttonAction}
       >
-        {portState === "closed"
-          ? "Connect"
-          : portState === "open"
-          ? "Disconnect"
-          : "Disconnecting"}
+        {buttonText}
       </button>
 
       <pre>
