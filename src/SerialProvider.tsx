@@ -6,53 +6,10 @@ import {
   useState,
 } from "react";
 
-interface PortOpenOptions {
-  baudRate: number;
-  dataBits?: 7 | 8;
-  stopBits?: 1 | 2;
-  parity?: "none" | "even" | "odd";
-  bufferSize?: number;
-  flowControl?: "none" | "hardware";
-}
-
-interface SerialPort {
-  open(options: PortOpenOptions): Promise<void>;
-  close(): Promise<void>;
-  readable: ReadableStream;
-  writable: WritableStream;
-}
-
-interface Filter {
-  usbVendorId: number;
-  usbProductId: number;
-}
-
-interface RequestPortOptions {
-  filters: Filter[];
-}
-
-type SerialEventType = "connect" | "disconnect";
-
-interface SerialConnectionEvent extends Event {
-  port: SerialPort;
-}
-
-declare global {
-  interface Navigator {
-    serial: {
-      addEventListener(
-        type: SerialEventType,
-        callback: (event: SerialConnectionEvent) => void
-      ): void;
-      removeEventListener(
-        type: SerialEventType,
-        callback: (event: SerialConnectionEvent) => void
-      ): void;
-      requestPort(options: RequestPortOptions): Promise<SerialPort>;
-      getPorts(): Promise<SerialPort[]>;
-    };
-  }
-}
+// RESOURCES:
+// https://web.dev/serial/
+// https://reillyeon.github.io/serial/#onconnect-attribute-0
+// https://codelabs.developers.google.com/codelabs/web-serial
 
 type PortState = "closed" | "closing" | "open" | "opening";
 
@@ -62,11 +19,6 @@ export type SerialMessage = {
 };
 
 type SerialMessageCallback = (message: SerialMessage) => void;
-
-// RESOURCES:
-// https://web.dev/serial/
-// https://reillyeon.github.io/serial/#onconnect-attribute-0
-// https://codelabs.developers.google.com/codelabs/web-serial
 
 export interface SerialContextValue {
   canUseSerial: boolean;
@@ -180,19 +132,21 @@ const SerialProvider = ({
   };
 
   const autoConnectToPort = async () => {
-    setPortState("opening");
-    setHasTriedAutoconnect(true);
-    const availablePorts = await navigator.serial.getPorts();
-    if (availablePorts.length) {
-      const port = availablePorts[0];
-      await openPort(port);
-    } else {
-      setPortState("closed");
+    if (canUseSerial && portState === "closed") {
+      setPortState("opening");
+      setHasTriedAutoconnect(true);
+      const availablePorts = await navigator.serial.getPorts();
+      if (availablePorts.length) {
+        const port = availablePorts[0];
+        await openPort(port);
+      } else {
+        setPortState("closed");
+      }
     }
   };
 
   const manualDisconnectFromPort = async () => {
-    if (canUseSerial && portState === "closed") {
+    if (canUseSerial && portState === "open") {
       const port = portRef.current;
       if (port) {
         setPortState("closing");
@@ -264,7 +218,7 @@ const SerialProvider = ({
       autoConnectToPort();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canUseSerial, hasManuallyDisconnected, portState]);
+  }, [canUseSerial, hasManuallyDisconnected, hasTriedAutoconnect, portState]);
 
   return (
     <SerialContext.Provider
