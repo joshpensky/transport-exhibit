@@ -12,7 +12,7 @@ import {
 // https://reillyeon.github.io/serial/#onconnect-attribute-0
 // https://codelabs.developers.google.com/codelabs/web-serial
 
-type PortState = "closed" | "closing" | "open" | "opening";
+export type PortState = "closed" | "closing" | "open" | "opening";
 
 export type SerialMessage = {
   value: string;
@@ -23,14 +23,16 @@ type SerialMessageCallback = (message: SerialMessage) => void;
 
 export interface SerialContextValue {
   canUseSerial: boolean;
+  hasTriedAutoconnect: boolean;
   portState: PortState;
-  connect(): void;
+  connect(): Promise<boolean>;
   disconnect(): void;
   subscribe(callback: SerialMessageCallback): () => void;
 }
 export const SerialContext = createContext<SerialContextValue>({
   canUseSerial: false,
-  connect: () => {},
+  hasTriedAutoconnect: false,
+  connect: () => Promise.resolve(false),
   disconnect: () => {},
   portState: "closed",
   subscribe: () => () => {},
@@ -52,7 +54,8 @@ const SerialProvider = ({
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
   const readerClosedPromiseRef = useRef<Promise<void>>(Promise.resolve());
 
-  const subscribersRef = useRef<Map<string, SerialMessageCallback>>(new Map());
+  const currentSubscriberIdRef = useRef<number>(0);
+  const subscribersRef = useRef<Map<number, SerialMessageCallback>>(new Map());
   /**
    * Subscribes a callback function to the message event.
    *
@@ -60,9 +63,12 @@ const SerialProvider = ({
    * @returns an unsubscribe function
    */
   const subscribe = (callback: SerialMessageCallback) => {
-    subscribersRef.current.set(callback.name, callback);
+    const id = currentSubscriberIdRef.current;
+    subscribersRef.current.set(id, callback);
+    currentSubscriberIdRef.current++;
+
     return () => {
-      subscribersRef.current.delete(callback.name);
+      subscribersRef.current.delete(id);
     };
   };
 
@@ -109,7 +115,7 @@ const SerialProvider = ({
       setHasManuallyDisconnected(false);
     } catch (error) {
       setPortState("closed");
-      console.error("Could not open port", error);
+      console.error("Could not open port");
     }
   };
 
@@ -127,25 +133,29 @@ const SerialProvider = ({
       try {
         const port = await navigator.serial.requestPort({ filters });
         await openPort(port);
+        return true;
       } catch (error) {
         setPortState("closed");
-        console.error("User did not select port", error);
+        console.error("User did not select port");
       }
     }
+    return false;
   };
 
   const autoConnectToPort = async () => {
     if (canUseSerial && portState === "closed") {
       setPortState("opening");
-      setHasTriedAutoconnect(true);
       const availablePorts = await navigator.serial.getPorts();
       if (availablePorts.length) {
         const port = availablePorts[0];
         await openPort(port);
+        return true;
       } else {
         setPortState("closed");
       }
+      setHasTriedAutoconnect(true);
     }
+    return false;
   };
 
   const manualDisconnectFromPort = async () => {
@@ -227,6 +237,7 @@ const SerialProvider = ({
     <SerialContext.Provider
       value={{
         canUseSerial,
+        hasTriedAutoconnect,
         subscribe,
         portState,
         connect: manualConnectToPort,
