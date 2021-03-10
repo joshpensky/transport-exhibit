@@ -1,6 +1,7 @@
 import {
   createContext,
   PropsWithChildren,
+  useContext,
   useEffect,
   useRef,
   useState,
@@ -34,6 +35,8 @@ export const SerialContext = createContext<SerialContextValue>({
   portState: "closed",
   subscribe: () => () => {},
 });
+
+export const useSerial = () => useContext(SerialContext);
 
 interface SerialProviderProps {}
 const SerialProvider = ({
