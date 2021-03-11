@@ -25,11 +25,11 @@ const SerialLoader = ({ children }: PropsWithChildren<SerialLoaderProps>) => {
         ]}
       >
         <div css={tw`flex flex-col w-full max-w-lg p-6 bg-white rounded-xl`}>
-          <h1 css={[tw`text-xl font-bold mb-2`]}>Error</h1>
-          <p css={[tw`mb-0.5`]}>
+          <h1 css={[tw`text-xl font-medium -mt-1 mb-2`]}>Error</h1>
+          <p css={[tw`mb-1`]}>
             Your browser doesn't support the{" "}
             <a
-              css={[tw`text-blue-700 hocus:underline`]}
+              css={[tw`text-green-900 hocus:underline`]}
               href="https://web.dev/serial/"
               target="_blank"
               rel="noopener noreferrer"
@@ -38,7 +38,7 @@ const SerialLoader = ({ children }: PropsWithChildren<SerialLoaderProps>) => {
             </a>
             !
           </p>
-          <p>Please try updating or switching to a supported browser.</p>
+          <p>Please try switching to a supported browser (e.g., Chrome 89).</p>
         </div>
       </div>
     );
@@ -69,17 +69,18 @@ const SerialLoader = ({ children }: PropsWithChildren<SerialLoaderProps>) => {
     <div
       css={[tw`flex flex-col flex-1 min-h-screen items-center justify-center`]}
     >
-      <div css={tw`flex flex-col w-full max-w-lg p-6 bg-white rounded-xl`}>
-        <h1 css={[tw`text-xl font-bold mb-2`]}>Connect to RedBoard</h1>
+      <div css={tw`flex flex-col w-full max-w-4xl p-10 bg-white rounded-3xl`}>
+        <h1 css={[tw`text-4xl font-semibold mb-5`]}>Get Started</h1>
 
-        <p css={[tw`mb-5`]}>
-          Pair your SparkFun Electronics RedBoard via USB to get started.
+        <p css={[tw`text-3xl mb-10 leading-snug`]}>
+          Connect your SparkFun Electronics RedBoard via USB and pair with your
+          browser to get started.
         </p>
 
         <button
           css={[
-            tw`text-white font-medium bg-indigo-600 px-2 py-2.5 rounded-md`,
-            tw`transition-all ring-indigo-600 ring-0 ring-opacity-50 hocus:bg-indigo-700 focus:(outline-none ring)`,
+            tw`text-3xl text-white bg-green-800 p-5 pb-6 rounded-xl`,
+            tw`transition-all ring-green-800 ring-0 ring-opacity-50 hocus:bg-green-900 focus:(outline-none ring-8)`,
             tw`disabled:(text-gray-500 bg-gray-200 cursor-not-allowed)`,
           ]}
           ref={pairButtonRef}

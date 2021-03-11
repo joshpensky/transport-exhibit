@@ -5,60 +5,56 @@ import {
   useRef,
   useState,
 } from "react";
-import tw from "twin.macro";
-import { SerialMessage, useSerial } from "@src/providers/SerialProvider";
+import DirectionsBikeIcon from "@material-ui/icons/DirectionsBike";
+import DirectionsCarIcon from "@material-ui/icons/DirectionsCar";
+import DirectionsSubwayIcon from "@material-ui/icons/DirectionsSubway";
 import anime from "animejs";
+import tw, { theme } from "twin.macro";
+import { useSerial } from "@src/providers/SerialProvider";
+import useButtonPress from "@src/hooks/useButtonPress";
+import type { OverridableComponent } from "@material-ui/core/OverridableComponent";
+import type { SvgIconTypeMap } from "@material-ui/core";
 
-const ANSWER_TIME_SEC = 30;
+const ANSWER_TIME_SEC = 10;
 
 interface AnswerProps {
+  disabled?: boolean;
+  icon: OverridableComponent<SvgIconTypeMap<{}, "svg">>;
+  onPress(): void;
   selected?: boolean;
+  value: string;
 }
-const Answer = ({ children, selected }: PropsWithChildren<AnswerProps>) => (
-  <div
-    css={[
-      tw`w-full text-center text-xl bg-white p-8 rounded-xl mx-4 first:ml-0 last:mr-0`,
-      selected && tw`bg-gray-300`,
-    ]}
-  >
-    <p>{children}</p>
-  </div>
-);
+const Answer = ({
+  children,
+  disabled,
+  icon: Icon,
+  onPress,
+  selected,
+  value,
+}: PropsWithChildren<AnswerProps>) => {
+  const isPressed = useButtonPress(value);
 
-const useButtonPress = (value: string) => {
-  const { subscribe } = useSerial();
+  useEffect(() => {
+    if (!disabled && isPressed) {
+      onPress();
+    }
+  }, [disabled, isPressed, onPress]);
 
-  const [isPressed, setIsPressed] = useState(false);
-
-  const onMessage = useCallback(
-    (message: SerialMessage) => {
-      if (message.value === value) {
-        setIsPressed(true);
-      }
-    },
-    [value]
+  return (
+    <div
+      css={[
+        tw`flex w-full items-center justify-center text-xl p-8 rounded-t-3xl`,
+        tw`transition-colors bg-white text-green-900 ring ring-green-900`,
+        tw`mx-6 first:ml-0 last:mr-0`,
+        selected && tw`bg-lime-400`,
+      ]}
+    >
+      <div css={[tw`w-14 h-14`]}>
+        <Icon style={{ width: "100%", height: "100%" }} />
+      </div>
+      <p css={[tw`text-3xl ml-4`]}>{children}</p>
+    </div>
   );
-
-  // Simulate a button press-and-release state (about 150ms)
-  useEffect(() => {
-    if (isPressed) {
-      setTimeout(() => {
-        setIsPressed(false);
-      }, 150);
-    }
-  }, [isPressed]);
-
-  // Wait for the button press message
-  useEffect(() => {
-    if (!isPressed) {
-      const unsubscribe = subscribe(onMessage);
-      return () => {
-        unsubscribe();
-      };
-    }
-  }, [subscribe, onMessage, isPressed]);
-
-  return isPressed;
 };
 
 const Question = () => {
@@ -66,24 +62,77 @@ const Question = () => {
 
   const progressBarRef = useRef<HTMLDivElement>(null);
 
-  // TODO: add other buttons and check interaction when pressing 1 or more at the same time
-  const isCarPressed = useButtonPress("A");
+  const [response, setResponse] = useState<string | null>(null);
+
+  const respond = useCallback((newResponse: string) => {
+    setResponse((response) => {
+      if (response === null) {
+        return newResponse;
+      }
+      return response;
+    });
+  }, []);
+
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   useEffect(() => {
-    if (!isCarPressed) {
-      anime({
-        targets: progressBarRef.current,
+    if (isTimerRunning) {
+      const progressBar = progressBarRef.current;
+
+      const tl = anime.timeline();
+      tl.add({
+        targets: progressBar,
+        height: [0, theme`height.8`],
+        opacity: [0, 1],
+        easing: "easeOutCirc",
+        duration: 300,
+      });
+      tl.add({
+        targets: progressBar,
         scaleX: [0, 1],
         easing: "linear",
         duration: ANSWER_TIME_SEC * 1000,
       });
+      tl.finished.then(() => {
+        // TODO: change to show recommended answer
+        setResponse("B");
+      });
+
+      return () => {
+        tl.pause();
+        anime({
+          targets: progressBar,
+          height: [theme`height.8`, 0],
+          opacity: [1, 0],
+          easing: "easeOutCirc",
+          duration: 300,
+        });
+      };
     }
-  }, [isCarPressed]);
+  }, [isTimerRunning]);
+
+  useEffect(() => {
+    if (response) {
+      setIsTimerRunning(false);
+      const timeout = setTimeout(() => {
+        setResponse(null);
+      }, 1000);
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+
+    const timeout = setTimeout(() => setIsTimerRunning(true), 1000);
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [response]);
 
   // Log serial messages
   useEffect(() => {
     const unsubscribe = subscribe((message) => {
-      console.log(`${message.timestamp}: ${message.value}`);
+      console.log(`${message.timestamp}: ${JSON.stringify(message.value)}`);
     });
     return () => {
       unsubscribe();
@@ -91,22 +140,75 @@ const Question = () => {
   }, [subscribe]);
 
   return (
-    <div css={[tw`flex flex-1 min-h-screen`]}>
-      <div css={[tw`flex flex-col flex-1 m-8 bg-white rounded-2xl`]}>
-        <div css={tw`m-16 flex flex-col flex-1 bg-indigo-900`}>
-          <div css={tw`h-4 w-full bg-yellow-400 bg-opacity-50`}>
+    <div css={[tw`flex flex-col items-center pt-6 px-6 flex-1 min-h-screen`]}>
+      <div>
+        <div
+          css={[
+            tw`flex flex-col w-full max-w-6xl rounded-3xl bg-white ring ring-green-900 z-10 relative overflow-hidden`,
+            { marginBottom: "-10%" },
+          ]}
+        >
+          <p css={[tw`px-10 pt-7 pb-8 text-4xl leading-tight`]}>
+            It’s 8:45AM. You woke up late and need to get to work ASAP for a
+            crucial 9AM meeting. You’ve been late two times already, and the
+            office is about 2 miles away. How do you get there?
+          </p>
+
+          <div css={[tw`w-full bg-gray-400 bg-opacity-50 transform`]}>
             <div
               ref={progressBarRef}
-              css={tw`h-full w-full bg-yellow-400 origin-left`}
+              css={[tw`w-full bg-yellow-400 origin-left`]}
             />
           </div>
-
-          <div css={tw`flex flex-1 items-end m-8`}>
-            <Answer selected={isCarPressed}>Car</Answer>
-            <Answer>MBTA</Answer>
-            <Answer>Bike</Answer>
-          </div>
         </div>
+      </div>
+
+      <div css={[tw`absolute inset-0 flex flex-1 w-full px-28 pt-32`]}>
+        <div
+          css={[
+            tw`flex flex-1 bg-gray-400 rounded-t-3xl relative overflow-hidden`,
+          ]}
+        >
+          <img
+            css={[
+              tw`absolute inset-0 w-full h-full object-cover object-center`,
+            ]}
+            src={process.env.PUBLIC_URL + "/img/map.png"}
+            alt=""
+          />
+        </div>
+      </div>
+
+      <div
+        css={[tw`absolute inset-0 flex items-end justify-center w-full px-16`]}
+      >
+        <Answer
+          value="B"
+          icon={DirectionsBikeIcon}
+          disabled={!!response || !isTimerRunning}
+          selected={response === "B"}
+          onPress={() => respond("B")}
+        >
+          Bike
+        </Answer>
+        <Answer
+          value="T"
+          icon={DirectionsSubwayIcon}
+          disabled={!!response || !isTimerRunning}
+          selected={response === "T"}
+          onPress={() => respond("T")}
+        >
+          Subway
+        </Answer>
+        <Answer
+          value="C"
+          icon={DirectionsCarIcon}
+          disabled={!!response || !isTimerRunning}
+          selected={response === "C"}
+          onPress={() => respond("C")}
+        >
+          Car
+        </Answer>
       </div>
     </div>
   );
