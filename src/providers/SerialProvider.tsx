@@ -12,6 +12,8 @@ import {
 // https://reillyeon.github.io/serial/#onconnect-attribute-0
 // https://codelabs.developers.google.com/codelabs/web-serial
 
+export const MESSAGE_DELIMITER = "\r\n";
+
 export type PortState = "closed" | "closing" | "open" | "opening";
 
 export type SerialMessage = {
@@ -83,15 +85,25 @@ const SerialProvider = ({
       const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
       readerRef.current = textDecoder.readable.getReader();
 
+      let messageLeftover = "";
+
       try {
         while (true) {
           const { value, done } = await readerRef.current.read();
           if (done) {
             break;
           }
+
+          // Split the given value by the delimiter
+          const messages = (messageLeftover + value).split(MESSAGE_DELIMITER);
+          // Store any leftover/broken messages for next read
+          messageLeftover = messages.pop() ?? "";
+
           const timestamp = Date.now();
-          Array.from(subscribersRef.current).forEach(([name, callback]) => {
-            callback({ value, timestamp });
+          Array.from(subscribersRef.current).forEach(([id, callback]) => {
+            messages.forEach((value) => {
+              callback({ value, timestamp });
+            });
           });
         }
       } catch (error) {
@@ -199,12 +211,13 @@ const SerialProvider = ({
   useEffect(() => {
     const port = portRef.current;
     if (portState === "open" && port) {
-      // When the port is open, read until closed
+      // When the port is open, close the last read and wait for that to finish
       const aborted = { current: false };
       readerRef.current?.cancel();
       readerClosedPromiseRef.current.then(() => {
+        readerRef.current = null;
+        // Then if the effect hasn't rerun, start reading again
         if (!aborted.current) {
-          readerRef.current = null;
           readerClosedPromiseRef.current = readUntilClosed(port);
         }
       });

@@ -26,7 +26,7 @@ void loop() {
     carButtonState = newCarButtonState;
 
     if (!wasButtonActivated && carButtonState == LOW) {
-      Serial.write("C");
+      Serial.write("C\r\n");
       wasButtonActivated = true;
     }
   }
@@ -36,7 +36,7 @@ void loop() {
     mbtaButtonState = newMbtaButtonState;
 
     if (!wasButtonActivated && mbtaButtonState == LOW) {
-      Serial.write("T");
+      Serial.write("T\r\n");
       wasButtonActivated = true;
     }
   }
@@ -46,7 +46,7 @@ void loop() {
     bikeButtonState = newBikeButtonState;
 
     if (!wasButtonActivated && bikeButtonState == LOW) {
-      Serial.write("B");
+      Serial.write("B\r\n");
       wasButtonActivated = true;
     }
   }

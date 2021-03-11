@@ -78,11 +78,12 @@ const Question = () => {
   useEffect(() => {
     if (isTimerRunning) {
       const progressBar = progressBarRef.current;
+      const PROGRESS_BAR_HEIGHT = theme`height.7`;
 
       const tl = anime.timeline();
       tl.add({
         targets: progressBar,
-        height: [0, theme`height.8`],
+        height: [0, PROGRESS_BAR_HEIGHT],
         opacity: [0, 1],
         easing: "easeOutCirc",
         duration: 300,
@@ -102,7 +103,7 @@ const Question = () => {
         tl.pause();
         anime({
           targets: progressBar,
-          height: [theme`height.8`, 0],
+          height: [PROGRESS_BAR_HEIGHT, 0],
           opacity: [1, 0],
           easing: "easeOutCirc",
           duration: 300,
@@ -140,12 +141,11 @@ const Question = () => {
   }, [subscribe]);
 
   return (
-    <div css={[tw`flex flex-col items-center pt-6 px-6 flex-1 min-h-screen`]}>
+    <div css={[tw`flex flex-col items-center pt-10 px-6 flex-1 min-h-screen`]}>
       <div>
         <div
           css={[
             tw`flex flex-col w-full max-w-6xl rounded-3xl bg-white ring ring-green-900 z-10 relative overflow-hidden`,
-            { marginBottom: "-10%" },
           ]}
         >
           <p css={[tw`px-10 pt-7 pb-8 text-4xl leading-tight`]}>
@@ -163,7 +163,7 @@ const Question = () => {
         </div>
       </div>
 
-      <div css={[tw`absolute inset-0 flex flex-1 w-full px-28 pt-32`]}>
+      <div css={[tw`absolute inset-0 flex flex-1 w-full px-28 pt-36`]}>
         <div
           css={[
             tw`flex flex-1 bg-gray-400 rounded-t-3xl relative overflow-hidden`,
