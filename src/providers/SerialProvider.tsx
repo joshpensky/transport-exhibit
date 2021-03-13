@@ -126,6 +126,7 @@ const SerialProvider = ({
       setPortState("open");
       setHasManuallyDisconnected(false);
     } catch (error) {
+      portRef.current = null;
       setPortState("closed");
       console.error("Could not open port");
     }
