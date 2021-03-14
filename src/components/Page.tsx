@@ -51,6 +51,46 @@ const Page = ({
     });
   }, []);
 
+  const [showRecommended, setShowRecommended] = useState(false);
+
+  const onShowCardComplete = () => {
+    setTimeout(() => setShowRecommended(true), 1000);
+  };
+
+  const [highlighted, setHighlighted] = useState(recommended);
+
+  useEffect(() => {
+    if (showRecommended) {
+      const timeout = setTimeout(() => {
+        setTransitionState("exiting");
+      }, 10000);
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [highlighted, showRecommended]);
+
+  useEffect(() => {
+    if (showRecommended) {
+      const unsubscribe = subscribe(({ value }) => {
+        if (value.startsWith("TURN")) {
+          const turnVal = Number.parseInt(value.replace("TURN ", ""));
+          if (turnVal >= 682) {
+            setHighlighted("bike");
+          } else if (turnVal >= 342) {
+            setHighlighted("subway");
+          } else {
+            setHighlighted("car");
+          }
+        }
+      });
+
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [showRecommended, subscribe]);
+
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   useEffect(() => {
@@ -110,19 +150,19 @@ const Page = ({
         endDelay: 500,
       });
       // Animate question text coming in
-      let numPunctuationPauses = 0;
-      tl.add({
-        targets: question?.querySelectorAll("p span"),
-        duration: 1,
-        opacity: [0, 1],
-        delay(el, i) {
-          let delay = 40 * i + 500 * numPunctuationPauses;
-          if (el.textContent === ".") {
-            numPunctuationPauses += 1;
-          }
-          return delay;
-        },
-      });
+      // let numPunctuationPauses = 0;
+      // tl.add({
+      //   targets: question?.querySelectorAll("p span"),
+      //   duration: 1,
+      //   opacity: [0, 1],
+      //   delay(el, i) {
+      //     let delay = 40 * i + 500 * numPunctuationPauses;
+      //     if (el.textContent === ".") {
+      //       numPunctuationPauses += 1;
+      //     }
+      //     return delay;
+      //   },
+      // });
       // Animate question move to top
       tl.add({
         targets: question,
@@ -169,22 +209,26 @@ const Page = ({
     }
 
     if (transitionState === "exiting") {
-      anime({
-        targets: page,
-        opacity: [1, 0],
-        duration: 300,
-        easing: "linear",
-        delay: 3000,
-        complete() {
-          setTransitionState("exited");
-        },
-      });
+      // anime({
+      //   targets: page,
+      //   opacity: [1, 0],
+      //   duration: 300,
+      //   easing: "linear",
+      //   delay: 3000,
+      //   complete() {
+      //     setTransitionState("exited");
+      //   },
+      // });
     }
 
     if (transitionState === "exited") {
       anime.set(page, { opacity: 0 });
     }
   }, [transitionState, onComplete]);
+
+  // TODO: update animation: fact 1 -> fact 2 -> fact 3 -> hide map + show description + center cards in empty space
+  // TODO: add map images
+  // TODO: add board diagram to README
 
   return (
     <div
@@ -203,7 +247,7 @@ const Page = ({
           }}
         />
 
-        <div ref={bodyRef}>
+        <div ref={bodyRef} css={[tw`flex flex-col flex-1 w-full`]}>
           <div css={[tw`absolute inset-0 flex flex-1 w-full px-28 pt-24`]}>
             <div
               css={[
@@ -220,54 +264,68 @@ const Page = ({
             </div>
           </div>
 
-          <div
-            ref={answersRef}
-            css={[
-              tw`absolute inset-0 flex items-end justify-center w-full px-16`,
-            ]}
-          >
-            <Answer
-              facts={bike.facts}
-              description={bike.description}
-              value="B"
-              icon={DirectionsBikeIcon}
-              disabled={!!response || !isTimerRunning}
-              selected={response === "bike"}
-              showFullCard={!!response}
-              recommended={!!response && recommended === "bike"}
-              onPress={() => respond("bike")}
-              onShowComplete={() => setTransitionState("exiting")}
+          <div css={tw`relative flex flex-col flex-1 w-full`}>
+            <div
+              ref={answersRef}
+              css={[
+                tw`flex flex-1 justify-center w-full px-16`,
+                showRecommended
+                  ? tw`items-center`
+                  : tw`absolute inset-0 items-end`,
+              ]}
             >
-              Bike
-            </Answer>
-            <Answer
-              facts={subway.facts}
-              description={subway.description}
-              value="T"
-              icon={DirectionsSubwayIcon}
-              disabled={!!response || !isTimerRunning}
-              selected={response === "subway"}
-              showFullCard={!!response}
-              recommended={!!response && recommended === "subway"}
-              onPress={() => respond("subway")}
-              onShowComplete={() => setTransitionState("exiting")}
-            >
-              Subway
-            </Answer>
-            <Answer
-              facts={car.facts}
-              description={car.description}
-              value="C"
-              icon={DirectionsCarIcon}
-              disabled={!!response || !isTimerRunning}
-              selected={response === "car"}
-              showFullCard={!!response}
-              recommended={!!response && recommended === "car"}
-              onPress={() => respond("car")}
-              onShowComplete={() => setTransitionState("exiting")}
-            >
-              Car
-            </Answer>
+              <Answer
+                facts={bike.facts}
+                description={bike.description}
+                serialValue="B"
+                icon={DirectionsBikeIcon}
+                disabled={!!response || !isTimerRunning}
+                selected={response === "bike"}
+                showFullCard={!!response}
+                recommended={
+                  showRecommended && !!response && recommended === "bike"
+                }
+                dimmed={showRecommended && highlighted !== "bike"}
+                onPress={() => respond("bike")}
+                onShowComplete={() => onShowCardComplete()}
+              >
+                Bike
+              </Answer>
+              <Answer
+                facts={subway.facts}
+                description={subway.description}
+                serialValue="S"
+                icon={DirectionsSubwayIcon}
+                disabled={!!response || !isTimerRunning}
+                selected={response === "subway"}
+                showFullCard={!!response}
+                recommended={
+                  showRecommended && !!response && recommended === "subway"
+                }
+                dimmed={showRecommended && highlighted !== "subway"}
+                onPress={() => respond("subway")}
+                onShowComplete={() => onShowCardComplete()}
+              >
+                Subway
+              </Answer>
+              <Answer
+                facts={car.facts}
+                description={car.description}
+                serialValue="C"
+                icon={DirectionsCarIcon}
+                disabled={!!response || !isTimerRunning}
+                selected={response === "car"}
+                showFullCard={!!response}
+                recommended={
+                  showRecommended && !!response && recommended === "car"
+                }
+                dimmed={showRecommended && highlighted !== "car"}
+                onPress={() => respond("car")}
+                onShowComplete={() => onShowCardComplete()}
+              >
+                Car
+              </Answer>
+            </div>
           </div>
         </div>
       </div>

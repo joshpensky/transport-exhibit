@@ -21,6 +21,7 @@ export interface AnswerData {
 }
 
 interface AnswerProps extends AnswerData {
+  dimmed?: boolean;
   disabled?: boolean;
   icon: OverridableComponent<SvgIconTypeMap<{}, "svg">>;
   onPress(): void;
@@ -28,11 +29,12 @@ interface AnswerProps extends AnswerData {
   recommended?: boolean;
   selected?: boolean;
   showFullCard?: boolean;
-  value: string;
+  serialValue: string;
 }
 export const Answer = ({
   children,
   description,
+  dimmed,
   disabled,
   facts,
   icon: Icon,
@@ -41,9 +43,9 @@ export const Answer = ({
   selected,
   showFullCard,
   onShowComplete,
-  value,
+  serialValue,
 }: PropsWithChildren<AnswerProps>) => {
-  const isPressed = useButtonPress(value);
+  const isPressed = useButtonPress(serialValue);
 
   const [mounted, setMounted] = useState(false);
 
@@ -129,12 +131,9 @@ export const Answer = ({
         duration: 300,
         easing: "easeOutCirc",
       });
+      setMounted(false);
     }
   }, [selected, recommended, mounted]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!disabled && isPressed) {
@@ -142,17 +141,38 @@ export const Answer = ({
     }
   }, [disabled, isPressed, onPress]);
 
-  const isHighlighted = !!selected && !recommended;
+  useEffect(() => {
+    if (!disabled) {
+      const onKeydown = (evt: KeyboardEvent) => {
+        if (evt.key === serialValue.toLocaleLowerCase()) {
+          onPress();
+        }
+      };
+      window.addEventListener("keydown", onKeydown);
+      return () => {
+        window.removeEventListener("keydown", onKeydown);
+      };
+    }
+  }, [disabled, onPress, serialValue]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
-    <AnswerProvider value={{ isHighlighted }}>
-      <div css={[tw`w-full mx-6 first:ml-0 last:mr-0`]}>
+    <AnswerProvider value={{ isHighlighted: !!selected }}>
+      <div
+        css={[
+          tw`w-full mx-6 first:ml-0 last:mr-0 transition-all duration-300 transform`,
+          dimmed && tw`opacity-50 scale-95`,
+        ]}
+      >
         <div
           ref={cardRef}
           css={[
             tw`flex flex-col w-full rounded-3xl`,
             tw`transition-all bg-white text-green-900 border-3 border-green-900 ring-0 ring-lime-400`,
-            isHighlighted && tw`bg-lime-400`,
+            selected && tw`bg-lime-400`,
             recommended && tw`ring-8`,
             { transitionProperty: "box-shadow, background-color" },
           ]}
@@ -176,7 +196,7 @@ export const Answer = ({
                   tw`font-semibold tracking-wider mt-1 px-3 py-1 bg-green-900 text-white text-lg rounded-lg uppercase`,
                   tw`opacity-0 transition-all duration-300 transform translate-x-4`,
                   (selected || recommended) && tw`opacity-100 translate-x-0`,
-                  isHighlighted && tw`text-lime-400`,
+                  selected && tw`text-lime-400`,
                 ]}
               >
                 {recommended ? "Recommended" : "Selected"}
