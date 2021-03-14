@@ -4,24 +4,39 @@ import DirectionsCarIcon from "@material-ui/icons/DirectionsCar";
 import DirectionsSubwayIcon from "@material-ui/icons/DirectionsSubway";
 import anime from "animejs";
 import tw from "twin.macro";
-import { Answer } from "@src/components/Answer";
+import { Answer, AnswerData } from "@src/components/Answer";
 import { Question } from "@src/components/Question";
 import { useSerial } from "@src/providers/SerialProvider";
 
 interface PageProps {
   onComplete(): void;
   question: string;
+  recommended: "bike" | "subway" | "car";
+  bike: AnswerData;
+  subway: AnswerData;
+  car: AnswerData;
 }
 
 type TransitionState = "entering" | "entered" | "exiting" | "exited";
 
-const Page = ({ onComplete, question }: PageProps) => {
+const Page = ({
+  bike,
+  subway,
+  car,
+  onComplete,
+  question,
+  recommended,
+}: PageProps) => {
   const { subscribe } = useSerial();
 
   const pageRef = useRef<HTMLDivElement>(null);
   const [transitionState, setTransitionState] = useState<TransitionState>(
     "entering"
   );
+
+  const questionRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const answersRef = useRef<HTMLDivElement>(null);
 
   const [response, setResponse] = useState<string | null>(null);
 
@@ -53,37 +68,120 @@ const Page = ({ onComplete, question }: PageProps) => {
     };
   }, [subscribe]);
 
+  // Handles page functionality based on state
+  useEffect(() => {
+    switch (transitionState) {
+      case "entered": {
+        setIsTimerRunning(true);
+        break;
+      }
+
+      case "exited": {
+        onComplete();
+        break;
+      }
+    }
+  }, [onComplete, transitionState]);
+
+  // Handles page transitions based on state
   useEffect(() => {
     const page = pageRef.current;
+    const question = questionRef.current;
+    const body = bodyRef.current;
+    const answers = answersRef.current;
+
     if (transitionState === "entering") {
-      anime({
+      anime.set(question, {
+        position: "absolute",
+        left: "50%",
+        top: "50%",
+        translateX: "-50%",
+        translateY: "-50%",
+      });
+
+      const tl = anime.timeline();
+      tl.add({
         targets: page,
         opacity: [0, 1],
         duration: 300,
         easing: "linear",
         delay: 500,
         endDelay: 500,
+      });
+      // Animate question text coming in
+      // let numPunctuationPauses = 0;
+      // tl.add({
+      //   targets: question?.querySelectorAll("p span"),
+      //   duration: 1,
+      //   opacity: [0, 1],
+      //   delay(el, i) {
+      //     let delay = 40 * i + 500 * numPunctuationPauses;
+      //     if (el.textContent === ".") {
+      //       numPunctuationPauses += 1;
+      //     }
+      //     return delay;
+      //   },
+      // });
+      // Animate question move to top
+      tl.add({
+        targets: question,
+        top: ["50%", "0%"],
+        translateY: ["-50%", "0%"],
+        duration: 1000,
+        delay: 1000,
+        easing: "easeInOutCubic",
         complete() {
-          setTransitionState("entered");
+          // Reset styles
+          if (question) {
+            question.style.position = "";
+            question.style.transform = "";
+            question.style.top = "";
+            question.style.left = "";
+          }
         },
       });
-    } else if (transitionState === "entered") {
-      anime.set(page, { opacity: 1 });
-      setIsTimerRunning(true);
-    } else if (transitionState === "exiting") {
-      anime({
-        targets: page,
-        opacity: [1, 0],
+      // Animate body opacity
+      tl.add({
+        targets: body,
+        opacity: [0, 1],
         duration: 300,
         easing: "linear",
-        delay: 1000,
-        complete() {
-          setTransitionState("exited");
-        },
       });
-    } else if (transitionState === "exited") {
+      // Animate buttons popping up
+      tl.add(
+        {
+          targets: answers,
+          translateY: ["100%", "0%"],
+          duration: 1000,
+          endDelay: 1000,
+          easing: "easeInOutCubic",
+        },
+        "-=300"
+      );
+      tl.finished.then(() => {
+        setTransitionState("entered");
+      });
+    }
+
+    if (transitionState === "entered") {
+      anime.set(page, { opacity: 1 });
+    }
+
+    if (transitionState === "exiting") {
+      // anime({
+      //   targets: page,
+      //   opacity: [1, 0],
+      //   duration: 300,
+      //   easing: "linear",
+      //   delay: 1000,
+      //   complete() {
+      //     setTransitionState("exited");
+      //   },
+      // });
+    }
+
+    if (transitionState === "exited") {
       anime.set(page, { opacity: 0 });
-      onComplete();
     }
   }, [transitionState, onComplete]);
 
@@ -91,64 +189,84 @@ const Page = ({ onComplete, question }: PageProps) => {
     <div
       ref={pageRef}
       css={[
-        tw`flex flex-col items-center pt-10 px-6 flex-1 opacity-0 min-h-screen`,
+        tw`flex flex-col flex-1 items-center pt-10 px-6 opacity-0 min-h-screen overflow-hidden`,
       ]}
     >
-      <Question
-        question={question}
-        isTimerRunning={isTimerRunning}
-        onTimeUp={() => {
-          // TODO: change to show recommended answer
-          setResponse("B");
-        }}
-      />
+      <div css={tw`flex flex-col flex-1 w-full items-center relative`}>
+        <Question
+          ref={questionRef}
+          question={question}
+          isTimerRunning={isTimerRunning}
+          onTimeUp={() => {
+            // TODO: change to show recommended answer
+            setResponse("B");
+          }}
+        />
 
-      <div css={[tw`absolute inset-0 flex flex-1 w-full px-28 pt-36`]}>
-        <div
-          css={[
-            tw`flex flex-1 bg-gray-400 rounded-t-3xl relative overflow-hidden`,
-          ]}
-        >
-          <img
+        <div ref={bodyRef}>
+          <div css={[tw`absolute inset-0 flex flex-1 w-full px-28 pt-24`]}>
+            <div
+              css={[
+                tw`flex flex-1 bg-gray-400 rounded-t-3xl relative overflow-hidden`,
+              ]}
+            >
+              <img
+                css={[
+                  tw`absolute inset-0 w-full h-full object-cover object-center`,
+                ]}
+                src={process.env.PUBLIC_URL + "/img/map.png"}
+                alt=""
+              />
+            </div>
+          </div>
+
+          <div
+            ref={answersRef}
             css={[
-              tw`absolute inset-0 w-full h-full object-cover object-center`,
+              tw`absolute inset-0 flex items-end justify-center w-full px-16`,
             ]}
-            src={process.env.PUBLIC_URL + "/img/map.png"}
-            alt=""
-          />
+          >
+            <Answer
+              facts={bike.facts}
+              description={bike.description}
+              value="B"
+              icon={DirectionsBikeIcon}
+              disabled={!!response || !isTimerRunning}
+              selected={response === "B"}
+              showFullCard={!!response}
+              recommended={!!response && recommended === "bike"}
+              onPress={() => respond("B")}
+            >
+              Bike
+            </Answer>
+            <Answer
+              facts={subway.facts}
+              description={subway.description}
+              value="T"
+              icon={DirectionsSubwayIcon}
+              disabled={!!response || !isTimerRunning}
+              selected={response === "T"}
+              showFullCard={!!response}
+              recommended={!!response && recommended === "subway"}
+              onPress={() => respond("T")}
+            >
+              Subway
+            </Answer>
+            <Answer
+              facts={car.facts}
+              description={car.description}
+              value="C"
+              icon={DirectionsCarIcon}
+              disabled={!!response || !isTimerRunning}
+              selected={response === "C"}
+              showFullCard={!!response}
+              recommended={!!response && recommended === "car"}
+              onPress={() => respond("C")}
+            >
+              Car
+            </Answer>
+          </div>
         </div>
-      </div>
-
-      <div
-        css={[tw`absolute inset-0 flex items-end justify-center w-full px-16`]}
-      >
-        <Answer
-          value="B"
-          icon={DirectionsBikeIcon}
-          disabled={!!response || !isTimerRunning}
-          selected={response === "B"}
-          onPress={() => respond("B")}
-        >
-          Bike
-        </Answer>
-        <Answer
-          value="T"
-          icon={DirectionsSubwayIcon}
-          disabled={!!response || !isTimerRunning}
-          selected={response === "T"}
-          onPress={() => respond("T")}
-        >
-          Subway
-        </Answer>
-        <Answer
-          value="C"
-          icon={DirectionsCarIcon}
-          disabled={!!response || !isTimerRunning}
-          selected={response === "C"}
-          onPress={() => respond("C")}
-        >
-          Car
-        </Answer>
       </div>
     </div>
   );

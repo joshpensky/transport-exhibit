@@ -3,37 +3,20 @@ import Page from "@src/components/Page";
 import StyleProvider from "@src/providers/StyleProvider";
 import SerialLoader from "@src/components/SerialLoader";
 import { useState } from "react";
-
-const slides = [
-  {
-    id: "reservations",
-    question:
-      "You have dinner reservations with your friend in Fenway. You live in Allston about 2 miles away. How do you get there?",
-  },
-  {
-    id: "distant-travel",
-    question:
-      "You have plans to hang out with your friends at their place in Somerville. You plan on leaving your home in Jamaica Plain at noon. How do you get there?",
-  },
-  {
-    id: "late-to-work",
-    question:
-      "It’s 8:45AM. You woke up late and need to get to work ASAP for a crucial 9AM meeting. You’ve been late two times already, and the office is about 2 miles away. How do you get there?",
-  },
-];
+import { data } from "@src/data";
 
 const App = () => {
-  const [slideIndex, setSlideIndex] = useState(0);
+  const [slideIndex, setSlideIndex] = useState(2);
 
   const onComplete = () => {
-    setSlideIndex((index) => (index + 1) % slides.length);
+    setSlideIndex((index) => (index + 1) % data.length);
   };
 
   return (
     <StyleProvider>
       <SerialProvider>
         <SerialLoader>
-          {slides.map((slide, index) => {
+          {data.map((slide, index) => {
             if (index !== slideIndex) {
               return null;
             }
@@ -41,6 +24,28 @@ const App = () => {
               <Page
                 key={slide.id}
                 question={slide.question}
+                recommended={slide.recommended}
+                bike={{
+                  facts: slide.facts.map((fact) => ({
+                    label: fact.label,
+                    value: fact.bike,
+                  })),
+                  description: slide.descriptions.bike,
+                }}
+                subway={{
+                  facts: slide.facts.map((fact) => ({
+                    label: fact.label,
+                    value: fact.subway,
+                  })),
+                  description: slide.descriptions.subway,
+                }}
+                car={{
+                  facts: slide.facts.map((fact) => ({
+                    label: fact.label,
+                    value: fact.car,
+                  })),
+                  description: slide.descriptions.car,
+                }}
                 onComplete={onComplete}
               />
             );
