@@ -6,7 +6,7 @@ import { useState } from "react";
 import { data } from "@src/data";
 
 const App = () => {
-  const [slideIndex, setSlideIndex] = useState(2);
+  const [slideIndex, setSlideIndex] = useState(0);
 
   const onComplete = () => {
     setSlideIndex((index) => (index + 1) % data.length);

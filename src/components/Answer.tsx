@@ -24,6 +24,7 @@ interface AnswerProps extends AnswerData {
   disabled?: boolean;
   icon: OverridableComponent<SvgIconTypeMap<{}, "svg">>;
   onPress(): void;
+  onShowComplete(): void;
   recommended?: boolean;
   selected?: boolean;
   showFullCard?: boolean;
@@ -39,6 +40,7 @@ export const Answer = ({
   recommended,
   selected,
   showFullCard,
+  onShowComplete,
   value,
 }: PropsWithChildren<AnswerProps>) => {
   const isPressed = useButtonPress(value);
@@ -93,12 +95,19 @@ export const Answer = ({
         targets: card,
         translateY: `calc(100% - ${visibleHeight}px)`,
         duration: 500,
-        delay: 500,
+        delay: showIndex === 1 ? 1500 : 1000,
         easing: "easeOutCubic",
-        complete: () => setShowIndex((index) => Math.min(index + 1, 4)),
+        complete: () => {
+          if (showIndex <= listItems.length) {
+            setShowIndex(showIndex + 1);
+          } else {
+            onShowComplete();
+          }
+        },
       });
+      return;
     }
-  }, [showIndex]);
+  }, [showIndex, onShowComplete]);
 
   useEffect(() => {
     if (selected || recommended) {
@@ -120,16 +129,6 @@ export const Answer = ({
         duration: 300,
         easing: "easeOutCirc",
       });
-
-      // return () => {
-      //   anime({
-      //     targets: headerTitle,
-      //     left: ["0%", "50%"],
-      //     translateX: ["0%", "-50%"],
-      //     duration: 300,
-      //     easing: "easeOutCirc",
-      //   });
-      // };
     }
   }, [selected, recommended, mounted]);
 

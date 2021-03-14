@@ -8,10 +8,12 @@ import { Answer, AnswerData } from "@src/components/Answer";
 import { Question } from "@src/components/Question";
 import { useSerial } from "@src/providers/SerialProvider";
 
+export type Response = "bike" | "subway" | "car";
+
 interface PageProps {
   onComplete(): void;
   question: string;
-  recommended: "bike" | "subway" | "car";
+  recommended: Response;
   bike: AnswerData;
   subway: AnswerData;
   car: AnswerData;
@@ -38,9 +40,9 @@ const Page = ({
   const bodyRef = useRef<HTMLDivElement>(null);
   const answersRef = useRef<HTMLDivElement>(null);
 
-  const [response, setResponse] = useState<string | null>(null);
+  const [response, setResponse] = useState<Response | null>(null);
 
-  const respond = useCallback((newResponse: string) => {
+  const respond = useCallback((newResponse: Response) => {
     setResponse((response) => {
       if (response === null) {
         return newResponse;
@@ -54,7 +56,6 @@ const Page = ({
   useEffect(() => {
     if (response) {
       setIsTimerRunning(false);
-      setTransitionState("exiting");
     }
   }, [response]);
 
@@ -109,19 +110,19 @@ const Page = ({
         endDelay: 500,
       });
       // Animate question text coming in
-      // let numPunctuationPauses = 0;
-      // tl.add({
-      //   targets: question?.querySelectorAll("p span"),
-      //   duration: 1,
-      //   opacity: [0, 1],
-      //   delay(el, i) {
-      //     let delay = 40 * i + 500 * numPunctuationPauses;
-      //     if (el.textContent === ".") {
-      //       numPunctuationPauses += 1;
-      //     }
-      //     return delay;
-      //   },
-      // });
+      let numPunctuationPauses = 0;
+      tl.add({
+        targets: question?.querySelectorAll("p span"),
+        duration: 1,
+        opacity: [0, 1],
+        delay(el, i) {
+          let delay = 40 * i + 500 * numPunctuationPauses;
+          if (el.textContent === ".") {
+            numPunctuationPauses += 1;
+          }
+          return delay;
+        },
+      });
       // Animate question move to top
       tl.add({
         targets: question,
@@ -168,16 +169,16 @@ const Page = ({
     }
 
     if (transitionState === "exiting") {
-      // anime({
-      //   targets: page,
-      //   opacity: [1, 0],
-      //   duration: 300,
-      //   easing: "linear",
-      //   delay: 1000,
-      //   complete() {
-      //     setTransitionState("exited");
-      //   },
-      // });
+      anime({
+        targets: page,
+        opacity: [1, 0],
+        duration: 300,
+        easing: "linear",
+        delay: 3000,
+        complete() {
+          setTransitionState("exited");
+        },
+      });
     }
 
     if (transitionState === "exited") {
@@ -198,8 +199,7 @@ const Page = ({
           question={question}
           isTimerRunning={isTimerRunning}
           onTimeUp={() => {
-            // TODO: change to show recommended answer
-            setResponse("B");
+            setResponse(recommended);
           }}
         />
 
@@ -232,10 +232,11 @@ const Page = ({
               value="B"
               icon={DirectionsBikeIcon}
               disabled={!!response || !isTimerRunning}
-              selected={response === "B"}
+              selected={response === "bike"}
               showFullCard={!!response}
               recommended={!!response && recommended === "bike"}
-              onPress={() => respond("B")}
+              onPress={() => respond("bike")}
+              onShowComplete={() => setTransitionState("exiting")}
             >
               Bike
             </Answer>
@@ -245,10 +246,11 @@ const Page = ({
               value="T"
               icon={DirectionsSubwayIcon}
               disabled={!!response || !isTimerRunning}
-              selected={response === "T"}
+              selected={response === "subway"}
               showFullCard={!!response}
               recommended={!!response && recommended === "subway"}
-              onPress={() => respond("T")}
+              onPress={() => respond("subway")}
+              onShowComplete={() => setTransitionState("exiting")}
             >
               Subway
             </Answer>
@@ -258,10 +260,11 @@ const Page = ({
               value="C"
               icon={DirectionsCarIcon}
               disabled={!!response || !isTimerRunning}
-              selected={response === "C"}
+              selected={response === "car"}
               showFullCard={!!response}
               recommended={!!response && recommended === "car"}
-              onPress={() => respond("C")}
+              onPress={() => respond("car")}
+              onShowComplete={() => setTransitionState("exiting")}
             >
               Car
             </Answer>
