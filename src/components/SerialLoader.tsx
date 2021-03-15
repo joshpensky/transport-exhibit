@@ -21,7 +21,7 @@ const SerialLoader = ({ children }: PropsWithChildren<SerialLoaderProps>) => {
     return (
       <div
         css={[
-          tw`flex flex-col flex-1 min-h-screen items-center justify-center`,
+          tw`absolute inset-0 w-full h-full flex flex-col flex-1 min-h-screen items-center justify-center`,
         ]}
       >
         <div css={tw`flex flex-col w-full max-w-lg p-6 bg-white rounded-xl`}>
@@ -67,7 +67,9 @@ const SerialLoader = ({ children }: PropsWithChildren<SerialLoaderProps>) => {
 
   return (
     <div
-      css={[tw`flex flex-col flex-1 min-h-screen items-center justify-center`]}
+      css={[
+        tw`absolute inset-0 w-full h-full flex flex-col flex-1 items-center justify-center`,
+      ]}
     >
       <div css={tw`flex flex-col w-full max-w-4xl p-10 bg-white rounded-3xl`}>
         <h1 css={[tw`text-4xl font-semibold mb-5`]}>Get Started</h1>

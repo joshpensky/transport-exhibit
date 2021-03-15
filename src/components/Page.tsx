@@ -53,8 +53,10 @@ const Page = ({
 
   const [showRecommended, setShowRecommended] = useState(false);
 
-  const onShowCardComplete = () => {
-    setTimeout(() => setShowRecommended(true), 1000);
+  const onCardShowComplete = (portion: "facts" | "card") => {
+    if (portion === "card") {
+      setTimeout(() => setShowRecommended(true), 1000);
+    }
   };
 
   const [highlighted, setHighlighted] = useState(recommended);
@@ -287,7 +289,7 @@ const Page = ({
                 }
                 dimmed={showRecommended && highlighted !== "bike"}
                 onPress={() => respond("bike")}
-                onShowComplete={() => onShowCardComplete()}
+                onShowComplete={onCardShowComplete}
               >
                 Bike
               </Answer>
@@ -304,7 +306,7 @@ const Page = ({
                 }
                 dimmed={showRecommended && highlighted !== "subway"}
                 onPress={() => respond("subway")}
-                onShowComplete={() => onShowCardComplete()}
+                onShowComplete={onCardShowComplete}
               >
                 Subway
               </Answer>
@@ -321,7 +323,7 @@ const Page = ({
                 }
                 dimmed={showRecommended && highlighted !== "car"}
                 onPress={() => respond("car")}
-                onShowComplete={() => onShowCardComplete()}
+                onShowComplete={onCardShowComplete}
               >
                 Car
               </Answer>

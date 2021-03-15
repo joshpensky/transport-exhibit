@@ -16,15 +16,13 @@ const App = () => {
   return (
     <StyleProvider>
       <SerialProvider>
-        <SerialLoader>
-          <div
-            css={[
-              tw`flex flex-col flex-1 min-h-screen items-center justify-center`,
-            ]}
-          >
-            <div
-              css={[tw`relative bg-green-900`, { width: 1920, height: 1080 }]}
-            >
+        <div
+          css={[
+            tw`flex flex-col flex-1 min-h-screen items-center justify-center`,
+          ]}
+        >
+          <div css={[tw`relative bg-green-900`, { width: 1920, height: 1080 }]}>
+            <SerialLoader>
               {data.map((slide, index) => {
                 if (index !== slideIndex) {
                   return null;
@@ -59,9 +57,9 @@ const App = () => {
                   />
                 );
               })}
-            </div>
+            </SerialLoader>
           </div>
-        </SerialLoader>
+        </div>
       </SerialProvider>
     </StyleProvider>
   );

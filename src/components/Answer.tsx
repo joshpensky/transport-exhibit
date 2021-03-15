@@ -25,7 +25,7 @@ interface AnswerProps extends AnswerData {
   disabled?: boolean;
   icon: OverridableComponent<SvgIconTypeMap<{}, "svg">>;
   onPress(): void;
-  onShowComplete(): void;
+  onShowComplete(portion: "facts" | "card"): void;
   recommended?: boolean;
   selected?: boolean;
   showFullCard?: boolean;
@@ -102,8 +102,11 @@ export const Answer = ({
         complete: () => {
           if (showIndex <= listItems.length) {
             setShowIndex(showIndex + 1);
+            if (showIndex === listItems.length) {
+              onShowComplete("facts");
+            }
           } else {
-            onShowComplete();
+            onShowComplete("card");
           }
         },
       });

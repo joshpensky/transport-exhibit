@@ -1,10 +1,11 @@
 import { ReactNode } from "react";
 import { Highlight } from "@src/components/Highlight";
+import type { Response } from "@src/components/Page";
 
 interface Slide {
   id: string;
   question: string;
-  recommended: "bike" | "subway" | "car";
+  recommended: Response;
   facts: {
     label: ReactNode;
     bike: ReactNode;
