@@ -150,19 +150,19 @@ const Page = ({
         endDelay: 500,
       });
       // Animate question text coming in
-      // let numPunctuationPauses = 0;
-      // tl.add({
-      //   targets: question?.querySelectorAll("p span"),
-      //   duration: 1,
-      //   opacity: [0, 1],
-      //   delay(el, i) {
-      //     let delay = 40 * i + 500 * numPunctuationPauses;
-      //     if (el.textContent === ".") {
-      //       numPunctuationPauses += 1;
-      //     }
-      //     return delay;
-      //   },
-      // });
+      let numPunctuationPauses = 0;
+      tl.add({
+        targets: question?.querySelectorAll("p span"),
+        duration: 1,
+        opacity: [0, 1],
+        delay(el, i) {
+          let delay = 40 * i + 500 * numPunctuationPauses;
+          if (el.textContent === ".") {
+            numPunctuationPauses += 1;
+          }
+          return delay;
+        },
+      });
       // Animate question move to top
       tl.add({
         targets: question,
@@ -209,16 +209,16 @@ const Page = ({
     }
 
     if (transitionState === "exiting") {
-      // anime({
-      //   targets: page,
-      //   opacity: [1, 0],
-      //   duration: 300,
-      //   easing: "linear",
-      //   delay: 3000,
-      //   complete() {
-      //     setTransitionState("exited");
-      //   },
-      // });
+      anime({
+        targets: page,
+        opacity: [1, 0],
+        duration: 300,
+        easing: "linear",
+        delay: 3000,
+        complete() {
+          setTransitionState("exited");
+        },
+      });
     }
 
     if (transitionState === "exited") {
