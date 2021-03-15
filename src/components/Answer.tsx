@@ -11,6 +11,7 @@ import tw from "twin.macro";
 import useButtonPress from "@src/hooks/useButtonPress";
 import anime from "animejs";
 import { AnswerProvider } from "@src/providers/AnswerProvider";
+import { getElHeight } from "@src/utils/getElHeight";
 
 export interface AnswerData {
   facts: {
@@ -47,8 +48,6 @@ export const Answer = ({
 }: PropsWithChildren<AnswerProps>) => {
   const isPressed = useButtonPress(serialValue);
 
-  const [mounted, setMounted] = useState(false);
-
   const cardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const listItemRefs = useRef<(HTMLLIElement | null)[]>([]);
@@ -70,8 +69,6 @@ export const Answer = ({
     const card = cardRef.current;
     const header = headerRef.current;
     const listItems = listItemRefs.current;
-
-    const getElHeight = (el?: HTMLElement | null) => el?.offsetHeight ?? 0;
 
     let visibleHeight = 3 + getElHeight(header);
 
@@ -114,18 +111,12 @@ export const Answer = ({
     }
   }, [showIndex, onShowComplete]);
 
+  // Plays the header title move animation on select/recommend
   useEffect(() => {
-    if (selected || recommended) {
+    // Only run header animation once (either on select or recommend)
+    // Prevents animation from being run twice on recommended selections
+    if ((selected && !recommended) || (recommended && !selected)) {
       const headerTitle = headerTitleRef.current;
-
-      // If it's selected/recommended on mount, just set values
-      if (!mounted) {
-        anime.set(headerTitle, {
-          left: "0%",
-          translateX: "0%",
-        });
-        return;
-      }
 
       anime({
         targets: headerTitle,
@@ -134,10 +125,10 @@ export const Answer = ({
         duration: 300,
         easing: "easeOutCirc",
       });
-      setMounted(false);
     }
-  }, [selected, recommended, mounted]);
+  }, [selected, recommended]);
 
+  // Calls the `onPress` event handler on serial button press
   useEffect(() => {
     if (!disabled && isPressed) {
       onPress();
@@ -157,10 +148,6 @@ export const Answer = ({
       };
     }
   }, [disabled, onPress, serialValue]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <AnswerProvider value={{ isHighlighted: !!selected }}>

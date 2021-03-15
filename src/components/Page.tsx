@@ -3,10 +3,11 @@ import DirectionsBikeIcon from "@material-ui/icons/DirectionsBike";
 import DirectionsCarIcon from "@material-ui/icons/DirectionsCar";
 import DirectionsSubwayIcon from "@material-ui/icons/DirectionsSubway";
 import anime from "animejs";
-import tw from "twin.macro";
+import tw, { theme } from "twin.macro";
 import { Answer, AnswerData } from "@src/components/Answer";
 import { Question } from "@src/components/Question";
 import { useSerial } from "@src/providers/SerialProvider";
+import { getElHeight } from "@src/utils/getElHeight";
 
 export type Response = "bike" | "subway" | "car";
 
@@ -38,7 +39,9 @@ const Page = ({
 
   const questionRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
   const answersRef = useRef<HTMLDivElement>(null);
+  const innerAnswersRef = useRef<HTMLDivElement>(null);
 
   const [response, setResponse] = useState<Response | null>(null);
 
@@ -52,9 +55,12 @@ const Page = ({
   }, []);
 
   const [showRecommended, setShowRecommended] = useState(false);
+  const [showFullCards, setShowFullCards] = useState(false);
 
   const onCardShowComplete = (portion: "facts" | "card") => {
-    if (portion === "card") {
+    if (portion === "facts") {
+      setShowFullCards(true);
+    } else {
       setTimeout(() => setShowRecommended(true), 1000);
     }
   };
@@ -125,6 +131,38 @@ const Page = ({
       }
     }
   }, [onComplete, transitionState]);
+
+  useEffect(() => {
+    if (showFullCards) {
+      const map = mapRef.current;
+      const answers = answersRef.current;
+      const innerAnswers = innerAnswersRef.current;
+
+      const verticalSpacing = Number.parseFloat(theme`spacing.10`) * 16;
+      const availableHeight = getElHeight(answers) - verticalSpacing;
+
+      let translateY = (availableHeight - getElHeight(innerAnswers)) / 2; // center answers in area
+      translateY += verticalSpacing; // then, add back in vertical spacing
+
+      const tl = anime.timeline();
+      tl.add({
+        targets: answers,
+        delay: 1000,
+        duration: 500,
+        translateY: ["0px", `${-translateY}px`],
+        easing: "easeOutCubic",
+      });
+      tl.add(
+        {
+          targets: map,
+          opacity: [1, 0],
+          duration: 300,
+          easing: "linear",
+        },
+        "1000"
+      );
+    }
+  }, [showFullCards]);
 
   // Handles page transitions based on state
   useEffect(() => {
@@ -228,9 +266,8 @@ const Page = ({
     }
   }, [transitionState, onComplete]);
 
-  // TODO: update animation: fact 1 -> fact 2 -> fact 3 -> hide map + show description + center cards in empty space
   // TODO: add map images
-  // TODO: add board diagram to README
+  // TODO: add font files
 
   return (
     <div
@@ -252,6 +289,7 @@ const Page = ({
         <div ref={bodyRef} css={[tw`flex flex-col flex-1 w-full`]}>
           <div css={[tw`absolute inset-0 flex flex-1 w-full px-28 pt-24`]}>
             <div
+              ref={mapRef}
               css={[
                 tw`flex flex-1 bg-gray-400 rounded-t-3xl relative overflow-hidden`,
               ]}
@@ -270,63 +308,62 @@ const Page = ({
             <div
               ref={answersRef}
               css={[
-                tw`flex flex-1 justify-center w-full px-16`,
-                showRecommended
-                  ? tw`items-center`
-                  : tw`absolute inset-0 items-end`,
+                tw`absolute inset-0 items-end flex flex-1 justify-center w-full px-16`,
               ]}
             >
-              <Answer
-                facts={bike.facts}
-                description={bike.description}
-                serialValue="B"
-                icon={DirectionsBikeIcon}
-                disabled={!!response || !isTimerRunning}
-                selected={response === "bike"}
-                showFullCard={!!response}
-                recommended={
-                  showRecommended && !!response && recommended === "bike"
-                }
-                dimmed={showRecommended && highlighted !== "bike"}
-                onPress={() => respond("bike")}
-                onShowComplete={onCardShowComplete}
-              >
-                Bike
-              </Answer>
-              <Answer
-                facts={subway.facts}
-                description={subway.description}
-                serialValue="S"
-                icon={DirectionsSubwayIcon}
-                disabled={!!response || !isTimerRunning}
-                selected={response === "subway"}
-                showFullCard={!!response}
-                recommended={
-                  showRecommended && !!response && recommended === "subway"
-                }
-                dimmed={showRecommended && highlighted !== "subway"}
-                onPress={() => respond("subway")}
-                onShowComplete={onCardShowComplete}
-              >
-                Subway
-              </Answer>
-              <Answer
-                facts={car.facts}
-                description={car.description}
-                serialValue="C"
-                icon={DirectionsCarIcon}
-                disabled={!!response || !isTimerRunning}
-                selected={response === "car"}
-                showFullCard={!!response}
-                recommended={
-                  showRecommended && !!response && recommended === "car"
-                }
-                dimmed={showRecommended && highlighted !== "car"}
-                onPress={() => respond("car")}
-                onShowComplete={onCardShowComplete}
-              >
-                Car
-              </Answer>
+              <div ref={innerAnswersRef} css={[tw`flex w-full`]}>
+                <Answer
+                  facts={bike.facts}
+                  description={bike.description}
+                  serialValue="B"
+                  icon={DirectionsBikeIcon}
+                  disabled={!!response || !isTimerRunning}
+                  selected={response === "bike"}
+                  showFullCard={!!response}
+                  recommended={
+                    showRecommended && !!response && recommended === "bike"
+                  }
+                  dimmed={showRecommended && highlighted !== "bike"}
+                  onPress={() => respond("bike")}
+                  onShowComplete={onCardShowComplete}
+                >
+                  Bike
+                </Answer>
+                <Answer
+                  facts={subway.facts}
+                  description={subway.description}
+                  serialValue="S"
+                  icon={DirectionsSubwayIcon}
+                  disabled={!!response || !isTimerRunning}
+                  selected={response === "subway"}
+                  showFullCard={!!response}
+                  recommended={
+                    showRecommended && !!response && recommended === "subway"
+                  }
+                  dimmed={showRecommended && highlighted !== "subway"}
+                  onPress={() => respond("subway")}
+                  onShowComplete={onCardShowComplete}
+                >
+                  Subway
+                </Answer>
+                <Answer
+                  facts={car.facts}
+                  description={car.description}
+                  serialValue="C"
+                  icon={DirectionsCarIcon}
+                  disabled={!!response || !isTimerRunning}
+                  selected={response === "car"}
+                  showFullCard={!!response}
+                  recommended={
+                    showRecommended && !!response && recommended === "car"
+                  }
+                  dimmed={showRecommended && highlighted !== "car"}
+                  onPress={() => respond("car")}
+                  onShowComplete={onCardShowComplete}
+                >
+                  Car
+                </Answer>
+              </div>
             </div>
           </div>
         </div>
