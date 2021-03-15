@@ -234,7 +234,7 @@ const Page = ({
     <div
       ref={pageRef}
       css={[
-        tw`flex flex-col flex-1 items-center pt-10 px-6 opacity-0 min-h-screen overflow-hidden`,
+        tw`absolute inset-0 w-full h-full flex flex-col flex-1 items-center pt-10 px-6 opacity-0 overflow-hidden`,
       ]}
     >
       <div css={tw`flex flex-col flex-1 w-full items-center relative`}>
