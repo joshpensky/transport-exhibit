@@ -14,6 +14,7 @@ export type Response = "bike" | "subway" | "car";
 interface PageProps {
   onComplete(): void;
   question: string;
+  map: string;
   recommended: Response;
   bike: AnswerData;
   subway: AnswerData;
@@ -26,6 +27,7 @@ const Page = ({
   bike,
   subway,
   car,
+  map,
   onComplete,
   question,
   recommended,
@@ -65,7 +67,27 @@ const Page = ({
     }
   };
 
-  const [highlighted, setHighlighted] = useState(recommended);
+  const [highlighted /*, setHighlighted*/] = useState(recommended);
+  // useEffect(() => {
+  //   if (showRecommended) {
+  //     const unsubscribe = subscribe(({ value }) => {
+  //       if (value.startsWith("TURN")) {
+  //         const turnVal = Number.parseInt(value.replace("TURN ", ""));
+  //         if (turnVal >= 682) {
+  //           setHighlighted("bike");
+  //         } else if (turnVal >= 342) {
+  //           setHighlighted("subway");
+  //         } else {
+  //           setHighlighted("car");
+  //         }
+  //       }
+  //     });
+
+  //     return () => {
+  //       unsubscribe();
+  //     };
+  //   }
+  // }, [showRecommended, subscribe]);
 
   useEffect(() => {
     if (showRecommended) {
@@ -77,27 +99,6 @@ const Page = ({
       };
     }
   }, [highlighted, showRecommended]);
-
-  useEffect(() => {
-    if (showRecommended) {
-      const unsubscribe = subscribe(({ value }) => {
-        if (value.startsWith("TURN")) {
-          const turnVal = Number.parseInt(value.replace("TURN ", ""));
-          if (turnVal >= 682) {
-            setHighlighted("bike");
-          } else if (turnVal >= 342) {
-            setHighlighted("subway");
-          } else {
-            setHighlighted("car");
-          }
-        }
-      });
-
-      return () => {
-        unsubscribe();
-      };
-    }
-  }, [showRecommended, subscribe]);
 
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
@@ -266,9 +267,6 @@ const Page = ({
     }
   }, [transitionState, onComplete]);
 
-  // TODO: add map images
-  // TODO: add font files
-
   return (
     <div
       ref={pageRef}
@@ -298,7 +296,7 @@ const Page = ({
                 css={[
                   tw`absolute inset-0 w-full h-full object-cover object-center`,
                 ]}
-                src={process.env.PUBLIC_URL + "/img/map.png"}
+                src={process.env.PUBLIC_URL + map}
                 alt=""
               />
             </div>

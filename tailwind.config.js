@@ -33,7 +33,7 @@ module.exports = {
         3: "3px",
       },
       fontFamily: {
-        sans: ["Roobert TRIAL", ...defaultTheme.fontFamily.sans],
+        sans: ["Roobert Web", ...defaultTheme.fontFamily.sans],
       },
     },
   },

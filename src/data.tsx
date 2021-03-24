@@ -6,6 +6,7 @@ interface Slide {
   id: string;
   question: string;
   recommended: Response;
+  map: string;
   facts: {
     label: ReactNode;
     bike: ReactNode;
@@ -25,6 +26,7 @@ export const data: Slide[] = [
     question:
       "You have dinner reservations with your friend in Fenway. You live in Allston about 2 miles away. How do you get there?",
     recommended: "bike",
+    map: "/img/reservations-map.png",
     facts: [
       {
         label: "ETA",
@@ -81,6 +83,7 @@ export const data: Slide[] = [
     question:
       "You have plans to hang out with your friends at their place in Somerville. You plan on leaving your home in Jamaica Plain at noon. How do you get there?",
     recommended: "subway",
+    map: "/img/friends-map.png",
     facts: [
       {
         label: "ETA",
@@ -139,6 +142,7 @@ export const data: Slide[] = [
     question:
       "It’s 8:45AM. You woke up late and need to get to work ASAP for a crucial 9AM meeting. You’ve been late two times already, and the office is about 2 miles away. How do you get there?",
     recommended: "car",
+    map: "/img/work-map.png",
     facts: [
       {
         label: "ETA",

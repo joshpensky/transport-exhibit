@@ -6,7 +6,7 @@ int bikeButtonState = 0;
 int subwayButtonState = 0;
 int carButtonState = 0;
 
-int knobPosition = 0;
+// int knobPosition = 0;
 
 bool wasButtonActivated = false;
 
@@ -61,17 +61,17 @@ void loop()
     }
   }
 
-  int newKnobPosition = analogRead(A0);
-  if (newKnobPosition < knobPosition - 2 || newKnobPosition > knobPosition + 2)
-  {
-    knobPosition = newKnobPosition;
+  // int newKnobPosition = analogRead(A0);
+  // if (newKnobPosition < knobPosition - 2 || newKnobPosition > knobPosition + 2)
+  // {
+  //   knobPosition = newKnobPosition;
 
-    char messageChars[15];
-    String message = "TURN ";
-    message = message + knobPosition;
-    message = message + "\r\n";
-    message.toCharArray(messageChars, 15);
+  //   char messageChars[15];
+  //   String message = "TURN ";
+  //   message = message + knobPosition;
+  //   message = message + "\r\n";
+  //   message.toCharArray(messageChars, 15);
 
-    Serial.write(messageChars);
-  }
+  //   Serial.write(messageChars);
+  // }
 }

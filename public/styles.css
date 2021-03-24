@@ -1,3 +1,39 @@
 body {
   background-color: #000;
 }
+
+@font-face {
+  font-display: swap;
+  font-family: "Roobert Web";
+  font-stretch: normal;
+  font-style: normal;
+  font-weight: 300;
+  src: url("/fonts/R-Light.otf") format("opentype");
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "Roobert Web";
+  font-stretch: normal;
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/R-Regular.otf") format("opentype");
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "Roobert Web";
+  font-stretch: normal;
+  font-style: normal;
+  font-weight: 500;
+  src: url("/fonts/R-Medium.otf") format("opentype");
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "Roobert Web";
+  font-stretch: normal;
+  font-style: normal;
+  font-weight: 600;
+  src: url("/fonts/R-SemiBold.otf") format("opentype");
+}

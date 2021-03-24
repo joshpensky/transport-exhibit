@@ -135,20 +135,6 @@ export const Answer = ({
     }
   }, [disabled, isPressed, onPress]);
 
-  useEffect(() => {
-    if (!disabled) {
-      const onKeydown = (evt: KeyboardEvent) => {
-        if (evt.key === serialValue.toLocaleLowerCase()) {
-          onPress();
-        }
-      };
-      window.addEventListener("keydown", onKeydown);
-      return () => {
-        window.removeEventListener("keydown", onKeydown);
-      };
-    }
-  }, [disabled, onPress, serialValue]);
-
   return (
     <AnswerProvider value={{ isHighlighted: !!selected }}>
       <div
@@ -162,9 +148,9 @@ export const Answer = ({
           css={[
             tw`flex flex-col w-full rounded-3xl`,
             tw`transition-all bg-white text-green-900 border-3 border-green-900 ring-0 ring-lime-400`,
+            tw`transition-property[box-shadow, background-color]`,
             selected && tw`bg-lime-400`,
             recommended && tw`ring-8`,
-            { transitionProperty: "box-shadow, background-color" },
           ]}
         >
           <header ref={headerRef} css={[tw`py-8 px-10`]}>
