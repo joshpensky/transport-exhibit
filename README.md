@@ -20,9 +20,9 @@ To run this project, you'll need a few materials:
 
 - 1 SparkFun RedBoard, with microUSB cable
 - 1 breadboard
-- 11 jumper wires
+- 8 jumper wires
 - 3 push buttons
-- 1 potentiometer
+- 1 potentiomete
 
 The circuit diagram below shows how to hook up all of the materials:
 
